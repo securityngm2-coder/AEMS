@@ -1421,7 +1421,7 @@ export default function MaintenancePage() {
                 <button
                   type="button"
                   onClick={() => setPrintMachines(selectedMachines)}
-                  className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-[11px] font-bold flex items-center gap-1.5 shadow-sm shadow-indigo-500/25"
+                  className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white rounded-xl text-[11px] font-bold flex items-center gap-1.5 shadow-sm shadow-indigo-500/25 cursor-pointer transition-all"
                   title="Generate and download QR labels PDF for selected machines"
                 >
                   <QrCode size={12} /> Download QR ({selectedMachines.length})
@@ -1430,7 +1430,7 @@ export default function MaintenancePage() {
                 <button
                   type="button"
                   onClick={() => setPrintMachines(scopedMachines)}
-                  className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-[11px] font-bold flex items-center gap-1.5 shadow-sm shadow-indigo-500/25"
+                  className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white rounded-xl text-[11px] font-bold flex items-center gap-1.5 shadow-sm shadow-indigo-500/25 cursor-pointer transition-all"
                   title="Generate and download QR labels PDF for all visible machines"
                 >
                   <QrCode size={12} /> Download All QR (PDF)

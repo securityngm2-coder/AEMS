@@ -35,13 +35,26 @@ export default function MaintenanceQRPrintModal({ machines, onClose }: Maintenan
 
   const totalPages = Math.max(1, Math.ceil(qrItems.length / 12));
 
-  const handleDownloadPdf = async () => {
+  const handleDownloadPdf = async (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     if (generating) return;
+
     try {
       setGenerating(true);
       setActionType('download');
-      setProgress(0);
-      const blob = await generateMaintenanceQrPdfBlob(qrItems, (p) => setProgress(p));
+      setProgress(5);
+
+      // Short delay so browser immediately repaints the button into loading state
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      const blob = await generateMaintenanceQrPdfBlob(qrItems, (p) => {
+        setProgress(Math.max(5, Math.min(99, p)));
+      });
+
+      setProgress(100);
       const dateStr = new Date().toISOString().slice(0, 10);
       downloadPdfBlob(blob, `Preventive_Maintenance_QR_${dateStr}.pdf`);
       toast.success(`PDF downloaded successfully! (${totalPages} page${totalPages === 1 ? '' : 's'})`);
@@ -55,13 +68,26 @@ export default function MaintenanceQRPrintModal({ machines, onClose }: Maintenan
     }
   };
 
-  const handlePreviewPdf = async () => {
+  const handlePreviewPdf = async (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     if (generating) return;
+
     try {
       setGenerating(true);
       setActionType('preview');
-      setProgress(0);
-      const blob = await generateMaintenanceQrPdfBlob(qrItems, (p) => setProgress(p));
+      setProgress(5);
+
+      // Short delay so browser immediately repaints the button into loading state
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      const blob = await generateMaintenanceQrPdfBlob(qrItems, (p) => {
+        setProgress(Math.max(5, Math.min(99, p)));
+      });
+
+      setProgress(100);
       openPdfBlobInNewTab(blob);
     } catch (err) {
       console.error('Failed to open PDF:', err);
@@ -75,13 +101,13 @@ export default function MaintenanceQRPrintModal({ machines, onClose }: Maintenan
 
   return (
     <>
-      <div className="fixed inset-0 bg-slate-900/80 z-[130] flex items-center justify-center p-4 overflow-y-auto no-print">
+      <div className="fixed inset-0 bg-slate-900/80 z-[130] flex items-center justify-center p-3 sm:p-4 overflow-y-auto no-print">
         <div
-          className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl flex flex-col max-h-[85vh] animate-in fade-in zoom-in-95 duration-150"
+          className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl flex flex-col h-[90vh] max-h-[820px] overflow-hidden animate-in fade-in zoom-in-95 duration-150"
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+          {/* Header - Fixed & Shrink-0 */}
+          <div className="shrink-0 flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-white">
             <div>
               <div className="flex items-center gap-2">
                 <FileText className="text-indigo-600" size={20} />
@@ -95,42 +121,43 @@ export default function MaintenanceQRPrintModal({ machines, onClose }: Maintenan
               type="button"
               onClick={onClose}
               disabled={generating}
-              className="p-2 hover:bg-slate-100 rounded-xl text-slate-400 hover:text-slate-600 disabled:opacity-50 transition-colors"
+              className="p-2 hover:bg-slate-100 rounded-xl text-slate-400 hover:text-slate-600 disabled:opacity-40 transition-colors cursor-pointer disabled:cursor-not-allowed"
+              title="Close modal"
             >
               <X size={20} strokeWidth={2.5} />
             </button>
           </div>
 
-          {/* Progress bar banner while generating */}
+          {/* Progress bar banner while generating - Fixed & Shrink-0 */}
           {generating && (
-            <div className="bg-indigo-50 border-b border-indigo-100 px-6 py-2.5 flex items-center justify-between">
+            <div className="shrink-0 bg-indigo-50 border-b border-indigo-100 px-6 py-2.5 flex items-center justify-between transition-all">
               <div className="flex items-center gap-2 text-xs font-semibold text-indigo-900">
-                <Loader2 size={14} className="animate-spin text-indigo-600 shrink-0" />
+                <Loader2 size={15} className="animate-spin text-indigo-600 shrink-0" />
                 <span>
-                  {actionType === 'download' ? 'Generating PDF for download...' : 'Generating PDF preview...'} ({progress}%)
+                  {actionType === 'download' ? 'Generating and downloading PDF...' : 'Generating PDF for preview...'} ({progress}%)
                 </span>
               </div>
-              <div className="w-40 bg-indigo-200/70 rounded-full h-1.5 overflow-hidden">
+              <div className="w-48 bg-indigo-200/80 rounded-full h-2 overflow-hidden shadow-inner">
                 <div
-                  className="bg-indigo-600 h-1.5 rounded-full transition-all duration-150"
+                  className="bg-indigo-600 h-2 rounded-full transition-all duration-150 ease-out"
                   style={{ width: `${progress}%` }}
                 />
               </div>
             </div>
           )}
 
-          {/* Preview grid */}
-          <div className="flex-1 overflow-y-auto p-6 bg-slate-50/50">
+          {/* Preview grid - Scrollable & min-h-0 so footer is never pushed out */}
+          <div className="flex-1 min-h-0 overflow-y-auto p-6 bg-slate-50/50">
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
               {qrItems.map((item) => (
                 <div
                   key={item.id}
-                  className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col items-center gap-2 hover:border-indigo-200 transition-colors"
+                  className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col items-center gap-2 hover:border-indigo-300 transition-colors"
                 >
-                  <div className="bg-slate-50 p-2 rounded-lg border border-slate-100">
+                  <div className="bg-slate-50 p-2 rounded-lg border border-slate-100 flex items-center justify-center">
                     <QRCodeSVG value={item.qrValue} size={110} level="H" includeMargin={false} />
                   </div>
-                  <span className="text-[9px] font-mono font-bold text-slate-700 tracking-tight leading-none bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                  <span className="text-[9px] font-mono font-bold text-slate-700 tracking-tight leading-none bg-slate-100 px-2 py-0.5 rounded border border-slate-200 text-center max-w-full truncate">
                     {item.assetCode}
                   </span>
                   <span className="text-[10px] text-slate-400 text-center leading-tight truncate max-w-full">
@@ -141,44 +168,67 @@ export default function MaintenanceQRPrintModal({ machines, onClose }: Maintenan
             </div>
           </div>
 
-          {/* Action buttons */}
-          <div className="px-6 py-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3 bg-white">
-            <div className="text-[11px] text-slate-400 font-medium">
+          {/* Action buttons footer - Fixed & Shrink-0, ALWAYS visible and clickable */}
+          <div className="shrink-0 px-6 py-4 border-t border-slate-200/80 flex flex-wrap items-center justify-between gap-3 bg-white shadow-[0_-4px_12px_rgba(0,0,0,0.03)] z-10">
+            <div className="text-[11px] text-slate-500 font-medium">
               Multi-page PDF ensures all {qrItems.length} QR codes are cleanly paginated across {totalPages} page{totalPages === 1 ? '' : 's'}.
             </div>
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-3">
               <button
                 type="button"
                 onClick={onClose}
                 disabled={generating}
-                className="px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs rounded-xl border border-slate-200 uppercase tracking-wider transition-colors disabled:opacity-50"
+                className="px-4 py-2.5 bg-white hover:bg-slate-100 active:scale-95 text-slate-700 font-bold text-xs rounded-xl border border-slate-200 uppercase tracking-wider transition-all disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed select-none"
               >
                 Close
               </button>
+
               <button
                 type="button"
                 onClick={handlePreviewPdf}
                 disabled={generating}
-                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl border border-slate-300 flex items-center gap-1.5 uppercase tracking-wider transition-colors disabled:opacity-50"
+                className={`px-4 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 border transition-all select-none ${
+                  generating && actionType === 'preview'
+                    ? 'bg-slate-200 border-slate-300 text-slate-900 cursor-wait ring-2 ring-slate-400/40 shadow-sm'
+                    : generating
+                    ? 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed opacity-50'
+                    : 'bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-800 border-slate-300 cursor-pointer'
+                }`}
                 title="Open generated PDF in new tab to view or print with browser dialog"
               >
-                <Printer size={14} strokeWidth={2.5} />
-                <span>Print / Preview PDF</span>
+                {generating && actionType === 'preview' ? (
+                  <>
+                    <Loader2 size={15} className="animate-spin text-slate-700 shrink-0" />
+                    <span>Preparing... ({progress}%)</span>
+                  </>
+                ) : (
+                  <>
+                    <Printer size={15} strokeWidth={2.5} className="shrink-0" />
+                    <span>Print / Preview PDF</span>
+                  </>
+                )}
               </button>
+
               <button
                 type="button"
                 onClick={handleDownloadPdf}
                 disabled={generating}
-                className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs rounded-xl flex items-center gap-2 uppercase tracking-wider shadow-md shadow-indigo-600/25 transition-all disabled:opacity-60"
+                className={`px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-md transition-all select-none ${
+                  generating && actionType === 'download'
+                    ? 'bg-indigo-700 text-white cursor-wait opacity-95 shadow-indigo-700/30 ring-2 ring-indigo-400/50'
+                    : generating
+                    ? 'bg-indigo-400 text-white cursor-not-allowed opacity-50'
+                    : 'bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white shadow-indigo-600/25 cursor-pointer'
+                }`}
               >
                 {generating && actionType === 'download' ? (
                   <>
-                    <Loader2 size={14} className="animate-spin" />
-                    <span>Generating ({progress}%)...</span>
+                    <Loader2 size={15} className="animate-spin text-white shrink-0" />
+                    <span>Downloading... ({progress}%)</span>
                   </>
                 ) : (
                   <>
-                    <Download size={14} strokeWidth={2.5} />
+                    <Download size={15} strokeWidth={2.5} className="shrink-0" />
                     <span>Download PDF ({totalPages} {totalPages === 1 ? 'Page' : 'Pages'})</span>
                   </>
                 )}

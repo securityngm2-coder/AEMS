@@ -20,11 +20,15 @@ function sanitizeWinAnsi(text: string): string {
 /**
  * Generates a high-quality multi-page A4 PDF for Preventive Maintenance QR code labels.
  * 12 labels per page (3 columns x 4 rows) with cut-guides and crisp vector typography.
+ * Yields to the browser event loop regularly to keep UI responsive with smooth loading animation.
  */
 export async function generateMaintenanceQrPdfBlob(
   items: MaintenanceQrItem[],
   onProgress?: (progressPercent: number) => void
 ): Promise<Blob> {
+  // Initial yield to allow React to paint the loading button state
+  await new Promise((resolve) => setTimeout(resolve, 30));
+
   const pdfDoc = await PDFDocument.create();
 
   const fontHelvetica = await pdfDoc.embedFont(StandardFonts.Helvetica);
@@ -110,12 +114,12 @@ export async function generateMaintenanceQrPdfBlob(
       borderDashArray: [3, 2],
     });
 
-    // Generate high-resolution QR image
+    // Generate high-resolution QR image (240px with level M for fast rendering & crisp scan)
     try {
       const qrDataUrl = await QRCode.toDataURL(item.qrValue || '', {
-        width: 320,
+        width: 240,
         margin: 1,
-        errorCorrectionLevel: 'H',
+        errorCorrectionLevel: 'M',
       });
       const qrImage = await pdfDoc.embedPng(qrDataUrl);
 
@@ -168,6 +172,9 @@ export async function generateMaintenanceQrPdfBlob(
     if (onProgress) {
       onProgress(Math.round(((i + 1) / items.length) * 100));
     }
+
+    // Yield control to the browser every iteration to ensure UI stays silky smooth
+    await new Promise((resolve) => setTimeout(resolve, 0));
   }
 
   // Handle case when items is empty
@@ -182,6 +189,8 @@ export async function generateMaintenanceQrPdfBlob(
     });
   }
 
+  // Final yield before packing bytes
+  await new Promise((resolve) => setTimeout(resolve, 10));
   const pdfBytes = await pdfDoc.save();
   return new Blob([pdfBytes], { type: 'application/pdf' });
 }
