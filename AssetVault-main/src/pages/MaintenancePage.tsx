@@ -470,7 +470,7 @@ export default function MaintenancePage() {
   );
 
   const locationOptions = useMemo(() => {
-    return Array.from(new Set(allowedLocations.filter(Boolean))).sort((a, b) => a.localeCompare(b));
+    return Array.from(new Set(allowedLocations.filter(Boolean))).sort((a, b) => String(a).localeCompare(String(b)));
   }, [allowedLocations]);
 
   const plantOptions = useMemo(() => {
@@ -1422,16 +1422,18 @@ export default function MaintenancePage() {
                   type="button"
                   onClick={() => setPrintMachines(selectedMachines)}
                   className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-[11px] font-bold flex items-center gap-1.5 shadow-sm shadow-indigo-500/25"
+                  title="Generate and download QR labels PDF for selected machines"
                 >
-                  <QrCode size={12} /> Print QR ({selectedMachines.length})
+                  <QrCode size={12} /> Download QR ({selectedMachines.length})
                 </button>
               ) : scopedMachines.length > 0 ? (
                 <button
                   type="button"
                   onClick={() => setPrintMachines(scopedMachines)}
                   className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-[11px] font-bold flex items-center gap-1.5 shadow-sm shadow-indigo-500/25"
+                  title="Generate and download QR labels PDF for all visible machines"
                 >
-                  <QrCode size={12} /> Print All QR
+                  <QrCode size={12} /> Download All QR (PDF)
                 </button>
               ) : null}
               <button
@@ -1895,7 +1897,7 @@ export default function MaintenancePage() {
                                       onClick={() => { setPrintMachines([m]); setMachineMenuId(null); }}
                                       className="w-full text-left px-4 py-2 text-[13px] hover:bg-stone-50 flex items-center gap-3 text-stone-700"
                                     >
-                                      <QrCode size={15} className="shrink-0" /> Print QR
+                                      <QrCode size={15} className="shrink-0" /> Download QR (PDF)
                                     </button>
                                     {canDeleteMachine && (
                                       <button

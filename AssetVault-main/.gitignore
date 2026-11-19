@@ -9,6 +9,7 @@ coverage/
 scratch/
 uploads/
 data/uploads/
+data/backups/
 data/last-otp.txt
 aems-export.xlsx
 data/cache/issued_codes.json

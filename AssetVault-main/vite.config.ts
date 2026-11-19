@@ -23,6 +23,7 @@ export default defineConfig(({mode}) => {
             vendor: ['react', 'react-dom', 'react-router-dom'],
             icons: ['lucide-react'],
             excel: ['xlsx'],
+            pdf: ['pdf-lib', 'qrcode'],
           },
         },
       },
