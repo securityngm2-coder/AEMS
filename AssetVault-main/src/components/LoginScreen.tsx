@@ -26,13 +26,11 @@ export default function LoginScreen() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: loginEmail }),
       });
-      const data = await parseJsonResponse<{ error?: string; message?: string; otp?: string }>(res);
+      const data = await parseJsonResponse<{ error?: string; message?: string }>(res);
       if (!res.ok) throw new Error(data.error || 'Failed to request OTP');
       setOtpSent(true);
-      if (data.otp) {
-        setLoginOtp(data.otp);
-      }
-      toast.success(data.message || 'OTP generated successfully!', { duration: 8000 });
+      setLoginOtp('');
+      toast.success(data.message || 'OTP sent to your email. Please check your inbox!', { duration: 6000 });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Request failed';
       setLoginError(msg);
@@ -107,17 +105,27 @@ export default function LoginScreen() {
               </div>
             ) : (
               <div className="space-y-3">
-                <label className="text-xs font-medium text-gray-700 uppercase tracking-widest">
-                  Enter 6-Digit OTP
-                </label>
+                <div className="text-center space-y-1">
+                  <label className="text-xs font-bold text-gray-700 uppercase tracking-widest block">
+                    Enter 6-Digit OTP
+                  </label>
+                  <p className="text-xs text-gray-500">
+                    Verification code sent to <span className="font-semibold text-gray-800">{loginEmail}</span>
+                  </p>
+                  <p className="text-[11px] text-gray-400">
+                    From: <span className="font-mono text-gray-600 font-medium">verify.software2040@pgel.in</span>
+                  </p>
+                </div>
                 <input
                   type="text"
                   required
+                  autoFocus
+                  autoComplete="one-time-code"
                   value={loginOtp}
-                  onChange={(e) => setLoginOtp(e.target.value)}
+                  onChange={(e) => setLoginOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
                   maxLength={6}
-                  className="w-full bg-gray-50 border border-gray-300 rounded-xl text-center tracking-[0.5em] font-black text-2xl py-3.5 px-4 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
-                  placeholder="0 0 0 0 0 0"
+                  className="w-full bg-gray-50 border border-gray-300 rounded-xl text-center tracking-[0.5em] font-black text-2xl py-3.5 px-4 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all font-mono"
+                  placeholder="------"
                 />
                 {loginError && (
                   <p className="text-red-500 text-xs font-bold text-center mt-2">{loginError}</p>

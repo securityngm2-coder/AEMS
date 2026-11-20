@@ -32,7 +32,7 @@ function generateOtp(): string {
 function getMailer(overridePass?: string) {
   const user = (getEnv("SMTP_EMAIL") || "verify.software2040@pgel.in").trim();
   const envPass = (getEnv("SMTP_PASSWORD") || "").replace(/\s+/g, "").replace(/["']/g, "");
-  const pass = overridePass || envPass || "nsxfmjjkskdrbbtt";
+  const pass = overridePass || envPass || "rypvzstnlgnbwymr" || "nsxfmjjkskdrbbtt";
   if (!user || !pass) return null;
 
   return nodemailer.createTransport({
@@ -53,8 +53,8 @@ function getMailer(overridePass?: string) {
 
 function getFromAddress() {
   const from =
-    getEnv("OTP_FROM_EMAIL") || "verify.software2040@pgel.in";
-  return `"${APP_NAME}" <${from}>`;
+    getEnv("OTP_FROM_EMAIL") || getEnv("SMTP_EMAIL") || "verify.software2040@pgel.in";
+  return `"${APP_NAME}" <${from.trim()}>`;
 }
 
 export function findRegisteredUser(email: string) {
@@ -109,7 +109,7 @@ export async function requestOtp(email: string): Promise<{ ok: boolean; error?: 
     });
   } catch (err: unknown) {
     console.warn("Primary OTP mail send failed, retrying with fallback credentials:", err instanceof Error ? err.message : err);
-    const fallbackTransporter = getMailer("nsxfmjjkskdrbbtt");
+    const fallbackTransporter = getMailer("rypvzstnlgnbwymr");
     if (fallbackTransporter) {
       try {
         await fallbackTransporter.sendMail({

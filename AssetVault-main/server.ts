@@ -507,7 +507,7 @@ function gasAuthError(result: unknown): string | null {
 function hasSmtpConfigured(): boolean {
   return (
     !!(getEnv("SMTP_EMAIL") || "verify.software2040@pgel.in") &&
-    !!(getEnv("SMTP_PASSWORD") || "nsxfmjjkskdrbbtt")
+    !!(getEnv("SMTP_PASSWORD") || "rypvzstnlgnbwymr" || "nsxfmjjkskdrbbtt")
   );
 }
 
@@ -579,11 +579,10 @@ app.post("/api/auth/request-otp", async (req, res) => {
         const status = /not authorized/i.test(dbErr) ? 403 : 400;
         return res.status(status).json({ error: dbErr });
       }
-      const r = dbResult as { message?: string; otp?: string };
+      const r = dbResult as { message?: string };
       return res.json({
         success: true,
         message: String(r.message || "OTP sent to your email"),
-        otp: r.otp,
       });
     }
 

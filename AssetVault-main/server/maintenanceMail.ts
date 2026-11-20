@@ -535,8 +535,8 @@ async function sendViaSmtp(
 ): Promise<void> {
   const user = (getEnv("SMTP_EMAIL") || "verify.software2040@pgel.in").trim();
   const envPass = (getEnv("SMTP_PASSWORD") || "").replace(/\s+/g, "").replace(/["']/g, "");
-  const defaultPass = "nsxfmjjkskdrbbtt";
-  const passwordsToTry = Array.from(new Set([envPass, defaultPass].filter(Boolean)));
+  const defaultPass = "rypvzstnlgnbwymr";
+  const passwordsToTry = Array.from(new Set([envPass, defaultPass, "nsxfmjjkskdrbbtt"].filter(Boolean)));
   if (to.length === 0) throw new Error("No recipients");
 
   const host = getEnv("SMTP_HOST") || "smtp.office365.com";

@@ -159,12 +159,12 @@ async function handleUsers(action: string, payload: Payload) {
 async function sendOtpMail(email: string, otp: string): Promise<boolean> {
   const user = (getEnv("SMTP_EMAIL") || "verify.software2040@pgel.in").trim();
   const envPass = (getEnv("SMTP_PASSWORD") || "").replace(/\s+/g, "").replace(/["']/g, "");
-  const defaultPass = "nsxfmjjkskdrbbtt";
-  const passwordsToTry = Array.from(new Set([envPass, defaultPass].filter(Boolean)));
+  const defaultPass = "rypvzstnlgnbwymr";
+  const passwordsToTry = Array.from(new Set([envPass, defaultPass, "nsxfmjjkskdrbbtt"].filter(Boolean)));
 
   const host = getEnv("SMTP_HOST") || "smtp.office365.com";
   const port = parseInt(getEnv("SMTP_PORT") || "587", 10);
-  const from = (getEnv("OTP_FROM_EMAIL") || user).trim();
+  const from = (getEnv("OTP_FROM_EMAIL") || user || "verify.software2040@pgel.in").trim();
 
   let lastError: unknown = null;
   for (const pass of passwordsToTry) {
@@ -184,7 +184,7 @@ async function sendOtpMail(email: string, otp: string): Promise<boolean> {
         socketTimeout: 30000,
       });
       await transporter.sendMail({
-        from: `"${APP_SHORT_NAME}" <${from}>`,
+        from: `"${APP_NAME}" <${from}>`,
         to: email,
         subject: `${otp} - Your ${APP_SHORT_NAME} login code`,
         html: buildOtpEmailHtml(otp, 10),
@@ -221,20 +221,17 @@ async function handleOtp(action: string, payload: Payload) {
     if (getEnv("OTP_LOG_TO_CONSOLE") === "true" || process.env.NODE_ENV !== "production") {
       console.log(`[SQL] Generated OTP for ${email}: ${otp}`);
     }
-    let mailDispatched = false;
-    let mailError = "";
+
     try {
       await sendOtpMail(email, otp);
-      mailDispatched = true;
     } catch (error) {
-      mailError = error instanceof Error ? error.message : String(error);
-      console.warn("[SQL] OTP email failed:", mailError);
+      const mailError = error instanceof Error ? error.message : String(error);
+      console.error("[SQL] OTP email failed to dispatch:", mailError);
+      return fail(`Failed to send verification email: ${mailError}. Please contact IT Admin.`);
     }
+
     return ok({
-      message: mailDispatched
-        ? "OTP sent to your email"
-        : `Verification code: ${otp}`,
-      otp,
+      message: "OTP sent to your email",
     });
   }
 

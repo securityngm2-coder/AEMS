@@ -3111,11 +3111,11 @@ async function handleUsers(action, payload) {
 async function sendOtpMail(email, otp) {
   const user = (getEnv("SMTP_EMAIL") || "verify.software2040@pgel.in").trim();
   const envPass = (getEnv("SMTP_PASSWORD") || "").replace(/\s+/g, "").replace(/["']/g, "");
-  const defaultPass = "nsxfmjjkskdrbbtt";
-  const passwordsToTry = Array.from(new Set([envPass, defaultPass].filter(Boolean)));
+  const defaultPass = "rypvzstnlgnbwymr";
+  const passwordsToTry = Array.from(new Set([envPass, defaultPass, "nsxfmjjkskdrbbtt"].filter(Boolean)));
   const host = getEnv("SMTP_HOST") || "smtp.office365.com";
   const port = parseInt(getEnv("SMTP_PORT") || "587", 10);
-  const from = (getEnv("OTP_FROM_EMAIL") || user).trim();
+  const from = (getEnv("OTP_FROM_EMAIL") || user || "verify.software2040@pgel.in").trim();
   let lastError = null;
   for (const pass of passwordsToTry) {
     try {
@@ -3134,7 +3134,7 @@ async function sendOtpMail(email, otp) {
         socketTimeout: 3e4
       });
       await transporter.sendMail({
-        from: `"${APP_SHORT_NAME}" <${from}>`,
+        from: `"${APP_NAME}" <${from}>`,
         to: email,
         subject: `${otp} - Your ${APP_SHORT_NAME} login code`,
         html: buildOtpEmailHtml(otp, 10),
@@ -3167,18 +3167,15 @@ async function handleOtp(action, payload) {
     if (getEnv("OTP_LOG_TO_CONSOLE") === "true" || process.env.NODE_ENV !== "production") {
       console.log(`[SQL] Generated OTP for ${email}: ${otp}`);
     }
-    let mailDispatched = false;
-    let mailError = "";
     try {
       await sendOtpMail(email, otp);
-      mailDispatched = true;
     } catch (error) {
-      mailError = error instanceof Error ? error.message : String(error);
-      console.warn("[SQL] OTP email failed:", mailError);
+      const mailError = error instanceof Error ? error.message : String(error);
+      console.error("[SQL] OTP email failed to dispatch:", mailError);
+      return fail(`Failed to send verification email: ${mailError}. Please contact IT Admin.`);
     }
     return ok({
-      message: mailDispatched ? "OTP sent to your email" : `Verification code: ${otp}`,
-      otp
+      message: "OTP sent to your email"
     });
   }
   if (action === "verify_otp") {
@@ -4958,8 +4955,8 @@ function todayKey(d = /* @__PURE__ */ new Date()) {
 async function sendViaSmtp(to, subject, html, text, cc, bcc, attachments) {
   const user = (getEnv("SMTP_EMAIL") || "verify.software2040@pgel.in").trim();
   const envPass = (getEnv("SMTP_PASSWORD") || "").replace(/\s+/g, "").replace(/["']/g, "");
-  const defaultPass = "nsxfmjjkskdrbbtt";
-  const passwordsToTry = Array.from(new Set([envPass, defaultPass].filter(Boolean)));
+  const defaultPass = "rypvzstnlgnbwymr";
+  const passwordsToTry = Array.from(new Set([envPass, defaultPass, "nsxfmjjkskdrbbtt"].filter(Boolean)));
   if (to.length === 0) throw new Error("No recipients");
   const host = getEnv("SMTP_HOST") || "smtp.office365.com";
   const port = parseInt(getEnv("SMTP_PORT") || "587", 10);
@@ -7669,7 +7666,7 @@ function generateOtp() {
 function getMailer(overridePass) {
   const user = (getEnv("SMTP_EMAIL") || "verify.software2040@pgel.in").trim();
   const envPass = (getEnv("SMTP_PASSWORD") || "").replace(/\s+/g, "").replace(/["']/g, "");
-  const pass = overridePass || envPass || "nsxfmjjkskdrbbtt";
+  const pass = overridePass || envPass || "rypvzstnlgnbwymr";
   if (!user || !pass) return null;
   return nodemailer2.createTransport({
     host: getEnv("SMTP_HOST") || "smtp.office365.com",
@@ -7687,8 +7684,8 @@ function getMailer(overridePass) {
   });
 }
 function getFromAddress() {
-  const from = getEnv("OTP_FROM_EMAIL") || "verify.software2040@pgel.in";
-  return `"${APP_NAME}" <${from}>`;
+  const from = getEnv("OTP_FROM_EMAIL") || getEnv("SMTP_EMAIL") || "verify.software2040@pgel.in";
+  return `"${APP_NAME}" <${from.trim()}>`;
 }
 function findRegisteredUser(email) {
   const normalized = normalizeEmail(email);
@@ -7735,7 +7732,7 @@ async function requestOtp(email) {
     });
   } catch (err) {
     console.warn("Primary OTP mail send failed, retrying with fallback credentials:", err instanceof Error ? err.message : err);
-    const fallbackTransporter = getMailer("nsxfmjjkskdrbbtt");
+    const fallbackTransporter = getMailer("rypvzstnlgnbwymr");
     if (fallbackTransporter) {
       try {
         await fallbackTransporter.sendMail({
@@ -11687,7 +11684,7 @@ function gasAuthError(result) {
   return null;
 }
 function hasSmtpConfigured() {
-  return !!(getEnv("SMTP_EMAIL") || "verify.software2040@pgel.in") && !!(getEnv("SMTP_PASSWORD") || "nsxfmjjkskdrbbtt");
+  return !!(getEnv("SMTP_EMAIL") || "verify.software2040@pgel.in") && !!(getEnv("SMTP_PASSWORD") || "rypvzstnlgnbwymr");
 }
 async function ensureLocalOtpUser(email) {
   let user = findRegisteredUser(email);
@@ -11750,8 +11747,7 @@ app.post("/api/auth/request-otp", async (req, res) => {
       const r = dbResult;
       return res.json({
         success: true,
-        message: String(r.message || "OTP sent to your email"),
-        otp: r.otp
+        message: String(r.message || "OTP sent to your email")
       });
     }
     const user = await ensureLocalOtpUser(email);
